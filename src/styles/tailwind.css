@@ -1,0 +1,5 @@
+@import "tailwindcss" source(none);
+/* src 配下と app 配下の両方をスキャンする（mdx も含む） */
+@source '../**/*.{js,ts,jsx,tsx,mdx}' '../../app/**/*.{js,ts,jsx,tsx,mdx}';
+
+@import "tw-animate-css";
