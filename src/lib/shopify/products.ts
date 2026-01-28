@@ -21,6 +21,7 @@ type RecommendationsQuery = {
     title: string;
     handle: string;
     featuredImage?: ShopifyImage | null;
+    images?: { edges: { node: ShopifyImage }[] };
     variants?: { edges: { node: ShopifyVariant }[] };
     priceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
   }[];
@@ -43,6 +44,7 @@ export type ProductRecommendation = {
   priceFormatted: string;
   imageUrl?: string | null;
   imageAlt?: string | null;
+  secondaryImageUrl?: string | null;
   variantId?: string;
   available?: boolean;
 };
@@ -90,12 +92,15 @@ export async function getProductRecommendations(productId: string): Promise<Prod
     data?.productRecommendations?.map((rec) => {
       const variantNode = rec.variants?.edges?.[0]?.node;
       const recPrice = rec.priceRange?.minVariantPrice ?? (variantNode?.price ? variantNode.price : undefined);
+      const images = rec.images?.edges?.map((e) => e.node) ?? [];
+      const secondaryImage = images[1] ?? null;
       return {
         title: rec.title,
         handle: rec.handle,
         priceFormatted: recPrice ? formatPrice(recPrice.amount, recPrice.currencyCode) : "",
         imageUrl: rec.featuredImage?.url,
         imageAlt: rec.featuredImage?.altText,
+        secondaryImageUrl: secondaryImage?.url ?? null,
         variantId: variantNode?.id,
         available: variantNode?.availableForSale ?? true,
       };

@@ -10,7 +10,7 @@ export function AvailabilityFilter({ inStockOnly, onToggle }: AvailabilityFilter
         type="checkbox"
         checked={inStockOnly}
         onChange={(e) => onToggle(e.target.checked)}
-        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/70"
+        className="h-4 w-4 accent-primary"
       />
       <span>In-stock only</span>
     </label>

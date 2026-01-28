@@ -1,19 +1,16 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Container } from "@/components/layout/Container";
 import { CollectionHeader } from "@/components/collections/CollectionHeader";
 import { CollectionFilters } from "@/components/collections/filters/CollectionFilters";
 import { getCollectionWithProducts } from "@/lib/shopify/collections";
+import { CollectionSkeleton } from "@/components/skeletons";
 
 type CollectionPageProps = {
   params: Promise<{ handle: string }>;
 };
 
-export default async function CollectionPage({ params }: CollectionPageProps) {
-  const { handle } = await params;
-  if (!handle) {
-    notFound();
-  }
-
+async function CollectionContent({ handle }: { handle: string }) {
   const collection = await getCollectionWithProducts(handle);
   if (!collection) {
     notFound();
@@ -33,5 +30,14 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         </Container>
       </section>
     </div>
+  );
+}
+
+export default async function CollectionPage({ params }: CollectionPageProps) {
+  const { handle } = await params;
+  return (
+    <Suspense fallback={<CollectionSkeleton />}>
+      <CollectionContent handle={handle} />
+    </Suspense>
   );
 }

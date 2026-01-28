@@ -86,19 +86,6 @@ export type ShopifyCart = {
   }[];
 };
 
-export type CartLineMerchandise = {
-  id: string;
-  title: string;
-  availableForSale?: boolean;
-  price: ShopifyPrice;
-  selectedOptions?: { name: string; value: string }[];
-  product: {
-    title: string;
-    handle: string;
-    featuredImage?: ShopifyImage | null;
-  };
-};
-
 export type CartLine = {
   id: string;
   quantity: number;
@@ -111,4 +98,18 @@ export type CartLine = {
     key: string;
     value: string;
   }[];
+};
+
+export type CartLineMerchandise = {
+  id: string;
+  title: string;
+  availableForSale?: boolean;
+  price: ShopifyPrice;
+  selectedOptions?: { name: string; value: string }[];
+  product: {
+    id: string;
+    title: string;
+    handle: string;
+    featuredImage?: ShopifyImage | null;
+  };
 };

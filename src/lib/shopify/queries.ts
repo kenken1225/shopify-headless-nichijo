@@ -1,4 +1,5 @@
-// ProductsPage Query
+import { CART_FRAGMENT } from "./mutations";
+
 export const PRODUCTS_LIST_QUERY = `
   query ProductsList {
     products(first: 12) {
@@ -12,7 +13,7 @@ export const PRODUCTS_LIST_QUERY = `
             width
             height
           }
-          images(first: 1) {
+          images(first: 2) {
             edges {
               node {
                 url
@@ -88,6 +89,14 @@ export const PRODUCT_RECOMMENDATIONS_QUERY = `
         url
         altText
       }
+      images(first: 2) {
+        edges {
+          node {
+            url
+            altText
+          }
+        }
+      }
       variants(first: 4) {
         edges {
           node {
@@ -126,6 +135,14 @@ export const PRODUCTS_BY_HANDLES_QUERY = `
           featuredImage {
             url
             altText
+          }
+          images(first: 2) {
+            edges {
+              node {
+                url
+                altText
+              }
+            }
           }
           priceRange {
             minVariantPrice {
@@ -172,49 +189,12 @@ export const COLLECTIONS_QUERY = `
 `;
 
 export const CART_QUERY = `
-query CartById($cartId: ID!) {
-  cart(id: $cartId) {
-    id
-    checkoutUrl
-    totalQuantity
-    cost {
-      subtotalAmount { amount currencyCode }
-      totalAmount { amount currencyCode }
+  query CartById($cartId: ID!) {
+    cart(id: $cartId) {
+      ...CartFields
     }
-    lines(first: 50) {
-      edges {
-        node {
-          id
-          quantity
-          cost {
-            subtotalAmount { amount currencyCode }
-            totalAmount { amount currencyCode }
-          }
-          merchandise {
-            ... on ProductVariant {
-              id
-              title
-              availableForSale
-              price { amount currencyCode }
-              selectedOptions { name value }
-              product {
-                title
-                handle
-                featuredImage { url altText width height }
-              }
-            }
-          }
-          attributes { key value }
-        }
-      }
-    }
-    buyerIdentity {
-      email
-      countryCode
-    }
-    attributes { key value }
   }
-}
+  ${CART_FRAGMENT}
 `;
 
 export const COLLECTION_BY_HANDLE_QUERY = `
@@ -242,7 +222,7 @@ export const COLLECTION_BY_HANDLE_QUERY = `
               width
               height
             }
-            images(first: 1) {
+            images(first: 2) {
               edges {
                 node {
                   url
@@ -387,6 +367,31 @@ export const POLICIES_QUERY = `
         title
         handle
         body
+      }
+    }
+  }
+`;
+
+export const MENU_QUERY = `
+  query Menu($handle: String!) {
+    menu(handle: $handle) {
+      id
+      handle
+      title
+      items {
+        id
+        title
+        url
+        items {
+          id
+          title
+          url
+          items {
+            id
+            title
+            url
+          }
+        }
       }
     }
   }

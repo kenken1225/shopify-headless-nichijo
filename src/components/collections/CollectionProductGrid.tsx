@@ -21,6 +21,7 @@ export function CollectionProductGrid({ products }: CollectionProductGridProps) 
           href={`/products/${product.handle}`}
           imageUrl={product.image?.url}
           imageAlt={product.image?.altText}
+          secondaryImageUrl={product.secondaryImage?.url}
         />
       ))}
     </div>

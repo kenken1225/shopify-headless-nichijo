@@ -9,6 +9,7 @@ import { formatPrice } from "@/lib/shopify";
 import type { ShopifyVariant } from "@/lib/types/shopify";
 import { YouMayAlsoLike } from "./YouMayAlsoLike";
 import { ProductPrice } from "./ProductPrice";
+import { useCart } from "@/contexts/CartContext";
 
 type RecommendationItem = {
   title: string;
@@ -38,6 +39,7 @@ type ProductActionsProps = {
 };
 
 export function ProductActions({ title, descriptionHtml, variants, recommendations = [] }: ProductActionsProps) {
+  const { setItemCount } = useCart();
   const initialVariant = variants.find((v) => v.availableForSale !== false) ?? variants[0] ?? null;
   const [selectedVariant, setSelectedVariant] = useState<ShopifyVariant | null>(initialVariant);
   const [quantity, setQuantity] = useState(1);
@@ -58,7 +60,6 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
   const [addingVariantId, setAddingVariantId] = useState<string | null>(null);
   const [recommendationLoading, setRecommendationLoading] = useState(false);
 
-  // オプション一覧をユニーク化
   const optionValues = useMemo(() => {
     const map = new Map<string, Set<string>>();
     variants.forEach((v) => {
@@ -104,14 +105,12 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
     });
   };
 
-  // 現在の選択（+ 変更予定の1値）で在庫ありバリアントが存在するか
   const hasAvailableVariantFor = (nextSelections: Record<string, string>) => {
     return variants.some((v) => v.availableForSale !== false && variantMatches(v, nextSelections));
   };
 
   const handleSelectOption = (name: string, value: string) => {
     const next = { ...selections, [name]: value };
-    // 完全一致かつ在庫ありを優先
     const match = variants.find((v) => v.availableForSale !== false && variantMatches(v, next));
     const pick = match ?? selectedVariant ?? variants[0] ?? null;
     setSelectedVariant(pick);
@@ -124,20 +123,21 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
   };
 
   const isOptionUnavailable = (name: string, value: string) => {
-    // 現在の選択をベースにこの値をセットしたとき、在庫ありバリアントが存在しなければ無効化
     const next = { ...selections, [name]: value };
     return !hasAvailableVariantFor(next);
   };
 
-  const parseCart = (cart: any): { lines: CartLine[]; subtotal: string; checkoutUrl: string | null } => {
-    const edges = cart?.lines?.edges ?? [];
-    const lines = edges.map(({ node }: any) => {
-      const merch = node?.merchandise;
-      const image = merch?.image;
+  const parseCart = (
+    cart: any
+  ): { lines: CartLine[]; subtotal: string; checkoutUrl: string | null; totalQuantity: number } => {
+    const rawLines = Array.isArray(cart?.lines) ? cart.lines : [];
+    const lines = rawLines.map((item: any) => {
+      const merch = item?.merchandise;
+      const image = merch?.product?.featuredImage ?? merch?.image;
       const price = merch?.price ? formatPrice(merch.price.amount, merch.price.currencyCode) : "";
       return {
-        id: node?.id ?? "",
-        quantity: node?.quantity ?? 1,
+        id: item?.id ?? "",
+        quantity: item?.quantity ?? 1,
         title: merch?.product?.title ?? merch?.title ?? "",
         variantTitle: merch?.title ?? "",
         price,
@@ -148,7 +148,8 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
     const subtotalNode = cart?.cost?.subtotalAmount;
     const subtotal = subtotalNode ? formatPrice(subtotalNode.amount, subtotalNode.currencyCode) : "";
     const checkout = cart?.checkoutUrl ?? null;
-    return { lines, subtotal, checkoutUrl: checkout };
+    const totalQuantity = cart?.totalQuantity ?? 0;
+    return { lines, subtotal, checkoutUrl: checkout, totalQuantity };
   };
 
   const handleAddToCart = async () => {
@@ -156,12 +157,11 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
     const avail = selectedVariant.quantityAvailable;
     const availableForSale = selectedVariant.availableForSale !== false;
     if (!availableForSale) {
-      setErrorMessage("現在この商品は販売できません。");
+      setErrorMessage("Currently this product is not available for sale.");
       return;
     }
-    // 数量が明示されている場合のみ上限チェック（デジタル商品など無制限はスキップ）
     if (typeof avail === "number" && avail > 0 && quantity > avail) {
-      setErrorMessage("在庫数を超えています。数量を減らしてお試しください。");
+      setErrorMessage("The quantity exceeds the inventory. Please reduce the quantity and try again.");
       return;
     }
     try {
@@ -181,11 +181,11 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
       setCartLines(parsed.lines);
       setCartSubtotal(parsed.subtotal);
       setCheckoutUrl(parsed.checkoutUrl);
+      setItemCount(parsed.totalQuantity);
       setDrawerOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to add to cart";
-      // 在庫超過などを含むエラーは一律で表示
-      setErrorMessage("商品在庫が不足しています。数量を減らしてお試しください。");
+      setErrorMessage("The product inventory is low. Please reduce the quantity to try.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -205,11 +205,7 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
           <ProductPrice value={displayPrice} />
-          <div
-            className="rich-text"
-            // HTML そのまま描画。リスト・見出し・メディアのはみ出しを抑制
-            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-          />
+          <div className="rich-text" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
         </div>
 
         {Array.from(optionValues.keys()).map((name) => {
@@ -294,7 +290,6 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
         </div>
       </div>
 
-      {/* Drawerを常にDOMに置き、translateでスライド制御 */}
       <div className="fixed inset-0 z-40 pointer-events-none">
         {drawerOpen && (
           <div
@@ -321,7 +316,6 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
                 <div key={line.id} className="flex gap-3 rounded-md border border-border bg-secondary/20 p-3">
                   <div className="relative h-16 w-16 overflow-hidden rounded-md bg-muted/60">
                     {line.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={line.imageUrl}
                         alt={line.imageAlt ?? line.title}
@@ -420,6 +414,7 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
       setCartLines(parsed.lines);
       setCartSubtotal(parsed.subtotal);
       setCheckoutUrl(parsed.checkoutUrl);
+      setItemCount(parsed.totalQuantity);
       setDrawerOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to add to cart";
@@ -446,6 +441,7 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
       setCartLines(parsed.lines);
       setCartSubtotal(parsed.subtotal);
       setCheckoutUrl(parsed.checkoutUrl);
+      setItemCount(parsed.totalQuantity);
     } catch (error) {
       console.error(error);
     } finally {

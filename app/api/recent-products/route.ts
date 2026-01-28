@@ -26,6 +26,7 @@ export async function GET(req: Request) {
             title: string;
             handle: string;
             featuredImage?: { url: string; altText?: string | null };
+            images?: { edges: { node: { url: string; altText?: string | null } }[] };
             priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
             variants: {
               edges: {
@@ -41,12 +42,15 @@ export async function GET(req: Request) {
       data?.products?.edges.map(({ node }) => {
         const variantNode = node.variants?.edges?.[0]?.node;
         const price = node.priceRange?.minVariantPrice;
+        const images = node.images?.edges?.map((e) => e.node) ?? [];
+        const secondaryImage = images[1] ?? null;
         return {
           title: node.title,
           price: price ? `${price.amount} ${price.currencyCode}` : "",
           href: `/products/${node.handle}`,
           imageUrl: node.featuredImage?.url,
           imageAlt: node.featuredImage?.altText ?? null,
+          secondaryImageUrl: secondaryImage?.url ?? null,
           variantId: variantNode?.id,
           available: variantNode?.availableForSale ?? true,
         };

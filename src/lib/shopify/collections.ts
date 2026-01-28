@@ -15,6 +15,7 @@ export type CollectionProduct = {
   handle: string;
   title: string;
   image?: ShopifyImage | null;
+  secondaryImage?: ShopifyImage | null;
   price?: { amount: string; currencyCode: string } | null;
   priceAmount?: number;
   priceCurrency?: string;
@@ -76,7 +77,9 @@ export async function getCollectionWithProducts(handle: string): Promise<Collect
 
   const products =
     data.collection.products?.edges?.map(({ node }) => {
-      const image = node.featuredImage ?? node.images?.edges?.[0]?.node ?? null;
+      const images = node.images?.edges?.map((e) => e.node) ?? [];
+      const image = node.featuredImage ?? images[0] ?? null;
+      const secondaryImage = images[1] ?? null;
       const minPrice = node.priceRange?.minVariantPrice ?? null;
       const variants = node.variants?.edges?.map((e) => e.node) ?? [];
       const availableVariant = variants.find((v) => v.availableForSale !== false);
@@ -86,6 +89,7 @@ export async function getCollectionWithProducts(handle: string): Promise<Collect
         handle: node.handle,
         title: node.title,
         image,
+        secondaryImage,
         price: minPrice,
         priceAmount: minPrice ? Number(minPrice.amount) : undefined,
         priceCurrency: minPrice?.currencyCode,

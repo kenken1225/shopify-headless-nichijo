@@ -11,6 +11,7 @@ type Recommendation = {
   href: string;
   imageUrl?: string | null;
   imageAlt?: string | null;
+  secondaryImageUrl?: string | null;
   variantId?: string;
   available?: boolean;
 };
@@ -68,7 +69,7 @@ export function YouMayAlsoLike({
       });
   }, [useRecentLocalStorage, maxRecent]);
 
-  const sourceItems = recentItems.length ? recentItems : items;
+  const sourceItems = items.length ? items : recentItems;
   // Keep API/recent order (assumed relevance) without re-sorting
   const limited = sourceItems.slice(0, 4);
 
@@ -102,13 +103,28 @@ export function YouMayAlsoLike({
       ) : null;
 
     if (variant === "compact") {
+      const hasSecondaryImage = !!item.secondaryImageUrl;
       return (
         <div className="flex flex-col items-start gap-3 rounded-md border border-border p-3">
           <div className="flex flex-col items-start gap-2 w-full">
-            <div className="relative h-auto w-full overflow-hidden rounded bg-muted/60 flex-shrink-0">
+            <div className="group relative h-auto w-full overflow-hidden rounded bg-muted/60 flex-shrink-0">
               {item.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.imageUrl} alt={item.imageAlt ?? item.title} className="h-full w-full object-cover" />
+                <>
+                  <img
+                    src={item.imageUrl}
+                    alt={item.imageAlt ?? item.title}
+                    className={`h-full w-full object-cover transition-opacity duration-300 ${
+                      hasSecondaryImage ? "group-hover:opacity-0" : ""
+                    }`}
+                  />
+                  {hasSecondaryImage && (
+                    <img
+                      src={item.secondaryImageUrl!}
+                      alt={item.imageAlt ?? item.title}
+                      className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    />
+                  )}
+                </>
               ) : null}
             </div>
             <div className="flex flex-col gap-1 w-full">
@@ -129,6 +145,7 @@ export function YouMayAlsoLike({
           href={item.href}
           imageUrl={item.imageUrl}
           imageAlt={item.imageAlt}
+          secondaryImageUrl={item.secondaryImageUrl}
         />
         {addBtn
           ? React.cloneElement(addBtn, {

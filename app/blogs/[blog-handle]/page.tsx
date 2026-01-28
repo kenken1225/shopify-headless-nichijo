@@ -1,22 +1,18 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Container } from "@/components/layout/Container";
 import { BlogList } from "@/components/blogs/BlogList";
 import { BlogSwitcher } from "@/components/blogs/BlogSwitcher";
 import { getBlogWithArticles, getBlogs } from "@/lib/shopify/blogs";
+import { BlogListSkeleton } from "@/components/skeletons";
 
-// Revalidate
 export const revalidate = 3600;
 
 type BlogPageProps = {
   params: Promise<{ "blog-handle": string }>;
 };
 
-export default async function BlogPage({ params }: BlogPageProps) {
-  const { "blog-handle": blogHandle } = await params;
-  if (!blogHandle) {
-    notFound();
-  }
-
+async function BlogContent({ blogHandle }: { blogHandle: string }) {
   const [blog, blogs] = await Promise.all([getBlogWithArticles(blogHandle), getBlogs()]);
   if (!blog) {
     notFound();
@@ -46,5 +42,15 @@ export default async function BlogPage({ params }: BlogPageProps) {
         </Container>
       </section>
     </div>
+  );
+}
+
+export default async function BlogPage({ params }: BlogPageProps) {
+  const { "blog-handle": blogHandle } = await params;
+
+  return (
+    <Suspense fallback={<BlogListSkeleton />}>
+      <BlogContent blogHandle={blogHandle} />
+    </Suspense>
   );
 }

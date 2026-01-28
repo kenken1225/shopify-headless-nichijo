@@ -6,18 +6,34 @@ type Props = {
   href: string;
   imageUrl?: string | null;
   imageAlt?: string | null;
+  secondaryImageUrl?: string | null;
 };
 
-export function ProductCard({ title, price, href, imageUrl, imageAlt }: Props) {
+export function ProductCard({ title, price, href, imageUrl, imageAlt, secondaryImageUrl }: Props) {
+  const hasSecondaryImage = !!secondaryImageUrl;
   return (
     <Link
       href={href}
-      className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:shadow"
+      className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:shadow"
     >
-      <div className="aspect-[4/5] w-full bg-muted/50">
+      <div className="aspect-[4/5] w-full bg-muted/50 relative overflow-hidden">
         {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt={imageAlt ?? title} className="h-full w-full object-cover" />
+          <>
+            <img
+              src={imageUrl}
+              alt={imageAlt ?? title}
+              className={`h-full w-full object-cover transition-opacity duration-300 ${
+                hasSecondaryImage ? "group-hover:opacity-0" : ""
+              }`}
+            />
+            {hasSecondaryImage && (
+              <img
+                src={secondaryImageUrl}
+                alt={imageAlt ?? title}
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              />
+            )}
+          </>
         ) : null}
       </div>
       <div className="flex flex-1 flex-col gap-1 px-4 py-3">

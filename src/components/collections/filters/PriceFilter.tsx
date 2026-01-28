@@ -19,7 +19,7 @@ export function PriceFilter({ options, value, onChange }: PriceFilterProps) {
               value={opt.key}
               checked={value === opt.key}
               onChange={() => onChange(opt.key)}
-              className="h-4 w-4 border-border text-primary focus:ring-primary/70"
+              className="h-4 w-4 accent-primary"
             />
             <span>{opt.label}</span>
           </label>
@@ -31,7 +31,7 @@ export function PriceFilter({ options, value, onChange }: PriceFilterProps) {
             value="all"
             checked={value === null}
             onChange={() => onChange(null)}
-            className="h-4 w-4 border-border text-primary focus:ring-primary/70"
+            className="h-4 w-4 accent-primary"
           />
           <span>All</span>
         </label>
@@ -39,4 +39,3 @@ export function PriceFilter({ options, value, onChange }: PriceFilterProps) {
     </div>
   );
 }
-

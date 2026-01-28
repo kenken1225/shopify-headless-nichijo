@@ -45,10 +45,10 @@ export async function shopifyFetch<T>(
   return json.data as T;
 }
 
-export function formatPrice(amount: string, currencyCode: string) {
+export function formatPrice(amount: string, currencyCode: string, locale = "en-US") {
   const value = Number(amount);
   if (Number.isNaN(value)) return amount;
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currencyCode,
   }).format(value);

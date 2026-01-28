@@ -1,10 +1,10 @@
 import { Container } from "@/components/layout/Container";
 import { YouMayAlsoLike } from "@/components/products/YouMayAlsoLike";
-import { getProductByHandle, getProductRecommendations } from "@/lib/shopify/products";
+import { getProductRecommendations } from "@/lib/shopify/products";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CartContent } from "@/components/cart/CartContent";
+import { CartSkeleton } from "@/components/skeletons";
 import { getCart } from "@/lib/shopify/cart";
 import { cookies } from "next/headers";
 
@@ -15,6 +15,33 @@ export default async function CartPage() {
   const cartId = cookieStore.get("cartId")?.value;
   const initialCart = cartId ? await getCart(cartId) : null;
 
+  const firstProductId = initialCart?.lines?.[0]?.merchandise?.product?.id ?? null;
+
+  let recommendations: {
+    title: string;
+    price: string;
+    href: string;
+    imageUrl?: string | null;
+    imageAlt?: string | null;
+    secondaryImageUrl?: string | null;
+    variantId?: string;
+    available?: boolean;
+  }[] = [];
+
+  if (firstProductId) {
+    const recommendationsData = await getProductRecommendations(firstProductId);
+    recommendations = recommendationsData.map((rec) => ({
+      title: rec.title,
+      price: rec.priceFormatted,
+      href: `/products/${rec.handle}`,
+      imageUrl: rec.imageUrl,
+      imageAlt: rec.imageAlt,
+      secondaryImageUrl: rec.secondaryImageUrl,
+      variantId: rec.variantId,
+      available: rec.available,
+    }));
+  }
+
   return (
     <div className="bg-background">
       <section className="border-b border-border">
@@ -22,7 +49,7 @@ export default async function CartPage() {
           <Link href="/" className="hover:underline">
             Home
           </Link>{" "}
-          / Cart``
+          / Cart
         </Container>
       </section>
 
@@ -34,19 +61,19 @@ export default async function CartPage() {
 
       <section className="py-10">
         <Container>
-          <Suspense fallback={<div> Loading...</div>}>
+          <Suspense fallback={<CartSkeleton />}>
             <CartContent cartId={cartId ?? null} initialCart={initialCart} />
           </Suspense>
         </Container>
       </section>
 
-      {/* <YouMayAlsoLike
+      <YouMayAlsoLike
         items={recommendations.length ? recommendations : undefined}
         useRecentLocalStorage
-        showAddButton
+        showAddButton={false}
         variant="default"
         title="You May Also Like"
-      /> */}
+      />
     </div>
   );
 }
