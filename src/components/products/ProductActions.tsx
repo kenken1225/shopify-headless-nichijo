@@ -58,7 +58,6 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [addingVariantId, setAddingVariantId] = useState<string | null>(null);
-  const [recommendationLoading, setRecommendationLoading] = useState(false);
 
   const optionValues = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -127,11 +126,14 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
     return !hasAvailableVariantFor(next);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type CartResponse = { lines?: any[]; cost?: any; checkoutUrl?: string; totalQuantity?: number };
+
   const parseCart = (
-    cart: any
+    cart: CartResponse | null
   ): { lines: CartLine[]; subtotal: string; checkoutUrl: string | null; totalQuantity: number } => {
     const rawLines = Array.isArray(cart?.lines) ? cart.lines : [];
-    const lines = rawLines.map((item: any) => {
+    const lines = rawLines.map((item) => {
       const merch = item?.merchandise;
       const image = merch?.product?.featuredImage ?? merch?.image;
       const price = merch?.price ? formatPrice(merch.price.amount, merch.price.currencyCode) : "";
@@ -198,9 +200,9 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
       setItemCount(parsed.totalQuantity);
       setDrawerOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to add to cart";
+      // エラーメッセージをログに出力し、ユーザーには在庫関連のメッセージを表示
+      console.error("Add to cart error:", error instanceof Error ? error.message : error);
       setErrorMessage("The product inventory is low. Please reduce the quantity to try.");
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -413,7 +415,6 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
       return;
     }
     try {
-      setRecommendationLoading(true);
       setAddingVariantId(variantId);
       setErrorMessage("");
       const currentCartId = retryWithoutCartId ? null : cartId;
@@ -427,7 +428,6 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
         // カートが存在しない場合、cartIdをクリアしてリトライ
         if (data?.error?.includes("does not exist") && !retryWithoutCartId) {
           clearInvalidCart();
-          setRecommendationLoading(false);
           setAddingVariantId(null);
           return handleAddToCartFromRecommendation(variantId, true);
         }
@@ -441,11 +441,10 @@ export function ProductActions({ title, descriptionHtml, variants, recommendatio
       setItemCount(parsed.totalQuantity);
       setDrawerOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to add to cart";
+      // エラーメッセージをログに出力し、ユーザーには在庫関連のメッセージを表示
+      console.error("Add recommendation to cart error:", error instanceof Error ? error.message : error);
       setErrorMessage("Product inventory is low. Please reduce the quantity to try.");
-      console.error(error);
     } finally {
-      setRecommendationLoading(false);
       setAddingVariantId(null);
     }
   }

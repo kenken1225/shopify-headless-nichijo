@@ -6,8 +6,8 @@ import { cookies } from "next/headers";
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    // const accessToken = cookieStore.get("customerAccessToken")?.value;
-    const accessToken = "9c18efcfb35da854074eebfadb901234";
+    const accessToken = cookieStore.get("customerAccessToken")?.value;
+    // const accessToken = "9c18efcfb35da854074eebfadb901234";
 
     if (!accessToken) {
       return NextResponse.json({ error: "Login is required" }, { status: 401 });

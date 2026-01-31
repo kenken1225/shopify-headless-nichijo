@@ -11,7 +11,6 @@ export function OrderHistory() {
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  console.log("test");
 
   useEffect(() => {
     const fetchOrders = async () => {

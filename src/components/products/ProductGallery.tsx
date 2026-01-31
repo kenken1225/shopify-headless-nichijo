@@ -30,12 +30,13 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
     });
   };
 
-  const scrollThumbs = (direction: "left" | "right") => {
+  const _scrollThumbs = (direction: "left" | "right") => {
     const node = thumbsRef.current;
     if (!node) return;
     const delta = direction === "left" ? -120 : 120;
     node.scrollBy({ left: delta, behavior: "smooth" });
   };
+  void _scrollThumbs;
 
   return (
     <div className="space-y-4 w-full max-w-full overflow-hidden">

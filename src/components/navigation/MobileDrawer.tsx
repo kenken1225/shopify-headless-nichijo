@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { MenuItem } from "@/lib/shopify/navigation";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -6,22 +6,24 @@ import clsx from "clsx";
 import { X } from "lucide-react";
 import { MobileMenuItem } from "./MobileMenuItem";
 
+function useIsMounted() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
+
 export function MobileDrawer({
   isOpen,
   onClose,
-  itemCount,
   menuItems,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  itemCount: number;
   menuItems: MenuItem[];
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   useEffect(() => {
     if (isOpen) {
