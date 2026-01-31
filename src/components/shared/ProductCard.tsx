@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Image } from "@/components/shared/Image";
 
 type Props = {
   title: string;
@@ -27,8 +28,8 @@ export function ProductCard({ title, price, href, imageUrl, imageAlt, secondaryI
               }`}
             />
             {hasSecondaryImage && (
-              <img
-                src={secondaryImageUrl}
+              <Image
+                src={secondaryImageUrl ?? ""}
                 alt={imageAlt ?? title}
                 className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
               />

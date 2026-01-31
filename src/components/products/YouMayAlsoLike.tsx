@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Container } from "@/components/layout/Container";
 import { ProductCard } from "@/components/shared/ProductCard";
+import { Image } from "@/components/shared/Image";
 
 type Recommendation = {
   title: string;
@@ -43,6 +44,7 @@ export function YouMayAlsoLike({
   useEffect(() => {
     if (!useRecentLocalStorage) return;
     if (typeof window === "undefined") return;
+
     const key = "recentProducts";
     let handles: string[] = [];
     try {
@@ -51,22 +53,41 @@ export function YouMayAlsoLike({
       handles = [];
     }
     if (!handles.length) return;
-    const limited = handles.slice(0, maxRecent);
-    const query = limited.join(",");
-    setRecentLoading(true);
-    void fetch(`/api/recent-products?handles=${encodeURIComponent(query)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data?.items)) {
+
+    const abortController = new AbortController();
+    let isCancelled = false;
+
+    const fetchRecentProducts = async () => {
+      const limited = handles.slice(0, maxRecent);
+      const query = limited.join(",");
+      setRecentLoading(true);
+
+      try {
+        const res = await fetch(`/api/recent-products?handles=${encodeURIComponent(query)}`, {
+          signal: abortController.signal,
+        });
+        const data = await res.json();
+
+        if (!isCancelled && Array.isArray(data?.items)) {
           setRecentItems(data.items);
         }
-      })
-      .catch(() => {
-        // fail silently
-      })
-      .finally(() => {
-        setRecentLoading(false);
-      });
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Failed to fetch recent products:", error);
+        }
+      } finally {
+        if (!isCancelled) {
+          setRecentLoading(false);
+        }
+      }
+    };
+
+    fetchRecentProducts();
+
+    return () => {
+      isCancelled = true;
+      abortController.abort();
+    };
   }, [useRecentLocalStorage, maxRecent]);
 
   const sourceItems = items.length ? items : recentItems;
@@ -110,16 +131,16 @@ export function YouMayAlsoLike({
             <div className="group relative h-auto w-full overflow-hidden rounded bg-muted/60 flex-shrink-0">
               {item.imageUrl ? (
                 <>
-                  <img
-                    src={item.imageUrl}
+                  <Image
+                    src={item.imageUrl ?? ""}
                     alt={item.imageAlt ?? item.title}
                     className={`h-full w-full object-cover transition-opacity duration-300 ${
                       hasSecondaryImage ? "group-hover:opacity-0" : ""
                     }`}
                   />
                   {hasSecondaryImage && (
-                    <img
-                      src={item.secondaryImageUrl!}
+                    <Image
+                      src={item.secondaryImageUrl ?? ""}
                       alt={item.imageAlt ?? item.title}
                       className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     />
