@@ -1,5 +1,6 @@
 import { AccountPageLayout } from "@/components/account/AccountPageLayout";
 import { ResetPasswordForm } from "@/components/account/ResetPasswordForm";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Create New Password | Nichijo",
@@ -7,25 +8,25 @@ export const metadata = {
 };
 
 type PageProps = {
-  params: Promise<{
-    customerId: string;
-    token: string;
+  searchParams: Promise<{
+    reset_url?: string;
   }>;
 };
 
-export default async function ResetPasswordPage({ params }: PageProps) {
-  const { customerId, token } = await params;
+export default async function ResetPasswordPage({ searchParams }: PageProps) {
+  const { reset_url } = await searchParams;
+
+  if (!reset_url) {
+    redirect("/account/login");
+  }
 
   return (
     <AccountPageLayout
       title="Create New Password"
       description="Please enter your new password below."
-      breadcrumbs={[
-        { label: "Login", href: "/account/login" },
-        { label: "Create New Password" },
-      ]}
+      breadcrumbs={[{ label: "Login", href: "/account/login" }, { label: "Create New Password" }]}
     >
-      <ResetPasswordForm customerId={customerId} resetToken={token} />
+      <ResetPasswordForm resetUrl={reset_url} />
     </AccountPageLayout>
   );
 }

@@ -8,11 +8,10 @@ import { FormInput } from "./FormInput";
 import { SubmitButton } from "./SubmitButton";
 
 type ResetPasswordFormProps = {
-  customerId: string;
-  resetToken: string;
+  resetUrl: string;
 };
 
-export function ResetPasswordForm({ customerId, resetToken }: ResetPasswordFormProps) {
+export function ResetPasswordForm({ resetUrl }: ResetPasswordFormProps) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,8 +41,7 @@ export function ResetPasswordForm({ customerId, resetToken }: ResetPasswordFormP
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerId,
-          resetToken,
+          resetUrl,
           password,
         }),
       });
